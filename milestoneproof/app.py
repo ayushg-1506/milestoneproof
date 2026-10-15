@@ -151,8 +151,9 @@ def run_audit():
     temp_extract_dir: Optional[tempfile.TemporaryDirectory] = None
 
     try:
-        # 1. Parse SOW input (form text, uploaded .md file, or JSON)
-        if request.content_type and "multipart/form-data" in request.content_type:
+        # 1. Parse SOW input (form data, uploaded .md file, or JSON)
+        is_form = bool(request.form or request.files or (request.content_type and "form" in request.content_type))
+        if is_form:
             sow_text = request.form.get("sow_text", "").strip()
 
             if "sow_file" in request.files:
@@ -193,7 +194,7 @@ def run_audit():
 
         else:
             # JSON Payload support
-            data = request.get_json() or {}
+            data = request.get_json(silent=True) or {}
             sow_text = data.get("sow_text", "").strip()
             use_sample = data.get("use_sample_deliverable", False)
 
