@@ -3,237 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MilestoneProof — SOW & Code Deliverable Verification Engine</title>
-    <meta name="description" content="Audit subcontracted code deliverables against contractual SOW acceptance criteria with open-weight AI and deterministic AST scanning.">
+    <title>MilestoneProof — Contract Deliverable Acceptance Auditor</title>
+    <meta name="description" content="Automated SOW and code deliverable acceptance verification engine. Traces contract criteria to empirical AST symbols and lines on disk.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="dark-theme">
+<body>
+    <!-- Navigation Header -->
     <header class="app-header">
         <div class="header-container">
-            <div class="brand">
-                <div class="brand-logo">
-                    <span class="logo-icon">🛡️</span>
-                    <span class="brand-text">Milestone<span class="brand-highlight">Proof</span></span>
-                </div>
-                <div class="brand-badges">
-                    <span class="badge badge-tech" id="brandTechBadge">Open-Weight AI</span>
-                    <span class="badge badge-privacy">AST Deterministic Proof</span>
-                </div>
+            <div class="brand-group">
+                <a href="/" class="brand-logo">
+                    <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="m9 12 2 2 4-4"/>
+                    </svg>
+                    <span>MilestoneProof</span>
+                </a>
+                <span class="version-pill">v0.2.0</span>
             </div>
-            <div class="header-status">
-                <div id="modelStatus" class="status-indicator">
-                    <span class="status-dot pulse"></span>
-                    <span id="modelStatusText">Checking Model Engine...</span>
+            <div class="header-controls">
+                <div id="modelStatusBadge" class="status-badge" title="Inference engine status">
+                    <span id="modelStatusDot" class="status-dot"></span>
+                    <span id="modelStatusText">Checking engine...</span>
                 </div>
-                <button id="loadSampleBtn" class="btn btn-secondary">⚡ Load Demo SOW</button>
+                <button id="loadSampleBtn" class="btn btn-secondary btn-sm" type="button">
+                    Load Demo SOW
+                </button>
             </div>
         </div>
     </header>
 
+    <!-- Context & Workflow Overview -->
+    <section class="overview-strip">
+        <div class="overview-content">
+            <div class="overview-title-block">
+                <h1>Verify subcontracted deliverables against SOW criteria</h1>
+                <p>
+                    Built for independent software developers, technical leads, and boutique engineering agencies. MilestoneProof compares contractual Statement of Work (SOW) acceptance specifications against submitted code repositories to surface line-accurate evidence citations, detect missing edge cases, and calculate an informative scope completion reference before milestone sign-off.
+                </p>
+            </div>
+            <div class="workflow-steps-summary">
+                <div class="step-chip"><span class="step-num">1</span> SOW Markdown</div>
+                <span class="step-arrow">→</span>
+                <div class="step-chip"><span class="step-num">2</span> Codebase Archive (.zip)</div>
+                <span class="step-arrow">→</span>
+                <div class="step-chip"><span class="step-num">3</span> Evidence Matrix</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Workspace -->
     <main class="app-main">
-        <!-- Input Section -->
-        <section class="section-inputs">
-            <div class="grid-two-col">
-                <!-- SOW Editor Card -->
-                <div class="card glass-card">
-                    <div class="card-header flex-between">
-                        <div>
-                            <div class="card-title">
-                                <span class="card-icon">📋</span>
-                                <h2>Statement of Work (SOW)</h2>
-                            </div>
-                            <span class="card-subtitle">Contractual Deliverables & Acceptance Criteria</span>
-                        </div>
-                        <div>
-                            <button id="uploadSowBtn" class="btn btn-secondary btn-sm" type="button">📁 Upload .md</button>
-                            <input type="file" id="sowFileInput" accept=".md,.markdown,.txt" style="display:none">
-                        </div>
+        <!-- 2-Column Input Grid -->
+        <section class="audit-workspace-grid">
+            <!-- Left: SOW Input Card -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div class="panel-title-group">
+                        <h2>1. Statement of Work (SOW)</h2>
+                        <span>Contractual specifications, criteria tables, or bullet lists</span>
                     </div>
-                    <div class="card-body">
-                        <textarea id="sowInput" class="code-editor" placeholder="Paste your Statement of Work in Markdown or click 'Load Demo SOW' above..." rows="12"></textarea>
+                    <div>
+                        <button id="uploadSowBtn" class="btn btn-secondary btn-sm" type="button">
+                            Upload .md File
+                        </button>
+                        <input type="file" id="sowFileInput" accept=".md,.markdown,.txt" style="display:none">
                     </div>
                 </div>
-
-                <!-- Deliverable Upload Card -->
-                <div class="card glass-card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <span class="card-icon">📂</span>
-                            <h2>Subcontractor Deliverable Codebase</h2>
-                        </div>
-                        <span class="card-subtitle">Upload Codebase Archive (.zip) or Select Demo</span>
+                <div class="panel-body">
+                    <textarea 
+                        id="sowInput" 
+                        class="sow-textarea" 
+                        placeholder="Paste contractual Statement of Work markdown here, upload a .md file, or click 'Load Demo SOW' above..."
+                        spellcheck="false"
+                    ></textarea>
+                    <div class="editor-footer-info">
+                        <span id="criteriaCountIndicator">Paste SOW to begin analysis</span>
+                        <span>Markdown table format recommended</span>
                     </div>
-                    <div class="card-body deliverable-control">
-                        <!-- Drop Zone -->
-                        <div id="dropZone" class="drop-zone">
-                            <div class="drop-zone-icon">📦</div>
-                            <div class="drop-zone-text">Drop deliverable codebase <strong>.zip</strong> archive here</div>
-                            <div class="drop-zone-hint">or click to browse from your computer (max 25 MB)</div>
-                        </div>
-                        <input type="file" id="zipFileInput" accept=".zip" style="display:none">
+                </div>
+            </div>
 
-                        <!-- Selected File Display -->
-                        <div id="selectedFileContainer" class="hidden" style="margin-top:0.75rem;">
-                            <span class="file-pill">
-                                📦 <span id="selectedFileName">codebase.zip</span> (<span id="selectedFileSize">0 KB</span>)
-                                <span id="removeFileBtn" class="file-pill-remove" title="Remove archive">✕</span>
-                            </span>
-                        </div>
+            <!-- Right: Codebase Deliverable Card -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div class="panel-title-group">
+                        <h2>2. Deliverable Codebase</h2>
+                        <span>Subcontractor code repository archive for AST and semantic analysis</span>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <!-- Drop Zone -->
+                    <div id="dropZone" class="upload-dropzone">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 16 12 12 8 16"/>
+                            <line x1="12" y1="12" x2="12" y2="21"/>
+                            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                            <polyline points="16 16 12 12 8 16"/>
+                        </svg>
+                        <div class="dropzone-label">Drag and drop codebase .zip archive here, or click to browse</div>
+                        <div class="dropzone-subtext">Supports Python and JavaScript/TypeScript archives up to 25 MB</div>
+                    </div>
+                    <input type="file" id="zipFileInput" accept=".zip" style="display:none">
 
-                        <!-- Bundled Demo Toggle -->
-                        <label class="demo-toggle-group">
-                            <input type="checkbox" id="useDemoDeliverable">
-                            <span><strong>Or use bundled demo deliverable</strong> (Alex Rivera — SaaS Auth & Webhook codebase)</span>
-                        </label>
-
-                        <div class="audit-features">
-                            <div class="feature-item">
-                                <span class="feature-check">✓</span>
-                                <div><strong>Safe Sandbox Extraction:</strong> Extracted into an isolated temporary directory and immediately deleted after audit.</div>
-                            </div>
-                            <div class="feature-item">
-                                <span class="feature-check">✓</span>
-                                <div><strong>Deterministic AST Scanner:</strong> Inspects routes, functions, classes, and test suites with line-accurate citations.</div>
-                            </div>
-                            <div class="feature-item">
-                                <span class="feature-check">✓</span>
-                                <div><strong>Advisory Valuation:</strong> Mathematical scope completion reference; humans retain sole payment authority.</div>
-                            </div>
+                    <!-- Selected File Pill -->
+                    <div id="selectedFileContainer" class="selected-file-strip hidden">
+                        <div class="selected-file-meta">
+                            <span>📦</span>
+                            <span id="selectedFileName">codebase.zip</span>
+                            <span id="selectedFileSize" class="text-mono" style="color:var(--text-tertiary);">(0 KB)</span>
                         </div>
+                        <button type="button" id="removeFileBtn" class="file-remove-btn" title="Remove selected archive">✕</button>
+                    </div>
 
-                        <div class="action-footer">
-                            <button id="runAuditBtn" class="btn btn-primary btn-large glow-btn">
-                                <span class="btn-icon">⚡</span> Run Deliverable Audit
-                            </button>
-                        </div>
+                    <!-- Bundled Demo Option -->
+                    <label class="demo-deliverable-toggle">
+                        <input type="checkbox" id="useDemoDeliverable">
+                        <span><strong>Or use bundled benchmark deliverable</strong> (Alex Rivera — SaaS Auth & Webhook codebase)</span>
+                    </label>
+
+                    <div class="sandbox-note">
+                        🔒 <strong>Isolated Extraction:</strong> Uploaded archives are safely extracted into a temporary sandbox directory, scanned via Python AST, and immediately deleted upon audit completion.
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- Audit Action Bar -->
+        <section class="audit-action-bar">
+            <div class="action-disclaimer">
+                <strong>Reviewer Advisory:</strong> Automated findings and proportional scope valuations are informative technical references. All contractual compliance determinations, formal milestone acceptance, and financial disbursements remain under the sole discretion of the human reviewer.
+            </div>
+            <div>
+                <button id="runAuditBtn" class="btn btn-primary btn-large" type="button">
+                    Run Deliverable Audit
+                </button>
+            </div>
+        </section>
+
         <!-- Loading State -->
-        <div id="auditLoading" class="loading-overlay hidden">
-            <div class="loading-spinner"></div>
+        <div id="auditLoading" class="loading-box hidden">
+            <div class="spinner"></div>
             <div class="loading-title">Auditing Deliverable Codebase...</div>
-            <div class="loading-subtitle">Extracting archive, scanning AST symbols, verifying cryptographic checks, and evaluating acceptance criteria.</div>
+            <div class="loading-detail">Extracting repository archive, scanning AST symbols, inspecting cryptographic checks, and evaluating acceptance criteria.</div>
         </div>
 
         <!-- Audit Results Section -->
-        <section id="resultsSection" class="section-results hidden">
-            <!-- Top Metrics Bar -->
-            <div class="metrics-grid">
-                <div class="metric-card glass-card">
-                    <div class="metric-label">Milestone Contract</div>
+        <section id="resultsSection" class="results-container hidden">
+            <!-- Executive Metrics Row -->
+            <div class="metrics-row">
+                <div class="metric-card">
+                    <div class="metric-label">Milestone Value</div>
                     <div id="metricMilestoneAmount" class="metric-value">$0.00</div>
                     <div id="metricProjectName" class="metric-sub">Client Project</div>
                 </div>
 
-                <div class="metric-card glass-card border-success">
-                    <div class="metric-label">Proportional Scope Completed</div>
+                <div class="metric-card">
+                    <div class="metric-label">Proportional Scope Verified</div>
                     <div id="metricReleaseAmount" class="metric-value text-success">$0.00</div>
-                    <div id="metricVerifiedPercent" class="metric-sub text-success">0.0% Verified (Reference Only)</div>
+                    <div id="metricVerifiedPercent" class="metric-sub">0.0% Verified (Informative Reference)</div>
                 </div>
 
-                <div class="metric-card glass-card border-warning">
-                    <div class="metric-label">Unverified Scope Value</div>
+                <div class="metric-card">
+                    <div class="metric-label">Unverified Scope Remaining</div>
                     <div id="metricRetainedAmount" class="metric-value text-warning">$0.00</div>
-                    <div class="metric-sub">Pending Unverified Criteria</div>
+                    <div class="metric-sub">Associated with Gaps / Missing Items</div>
                 </div>
 
-                <div class="metric-card glass-card">
+                <div class="metric-card">
                     <div class="metric-label">Compliance Breakdown</div>
-                    <div class="breakdown-pills">
+                    <div class="status-pill-group">
                         <span id="pillVerified" class="pill pill-success">0 Verified</span>
                         <span id="pillPartial" class="pill pill-warning">0 Partial</span>
                         <span id="pillMissing" class="pill pill-danger">0 Missing</span>
                     </div>
-                    <div id="metricAuditMode" class="metric-sub">Audit Mode: Checking...</div>
+                    <div id="metricAuditMode" class="metric-sub">Mode: Deterministic Engine</div>
                 </div>
-            </div>
-
-            <!-- Reviewer Advisory Banner -->
-            <div style="background:rgba(99, 102, 241, 0.08); border:1px solid rgba(99, 102, 241, 0.25); border-radius:var(--radius-md); padding:0.85rem 1.25rem; font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.5;">
-                ℹ️ <strong>Reviewer Advisory & Disclaimer:</strong> MilestoneProof generates automated, evidence-linked verification findings and proportional scope references for technical reviewers. All contractual compliance determinations, milestone acceptance decisions, and financial disbursements remain under the sole authority and discretion of the human project reviewer.
             </div>
 
             <!-- Tabbed Results Area -->
-            <div class="card glass-card results-container">
-                <div class="tabs-header">
-                    <button class="tab-btn active" data-tab="tab-matrix">🔍 Traceability Matrix</button>
-                    <button class="tab-btn" data-tab="tab-settlement">📊 Scope Valuation Reference</button>
-                    <button class="tab-btn" data-tab="tab-letter">✉️ Contractor Feedback Letter</button>
-                    <button class="tab-btn" data-tab="tab-export">📝 Full Markdown Report</button>
+            <div class="tabs-card">
+                <nav class="tabs-nav" role="tablist">
+                    <button class="tab-btn active" data-tab="tab-matrix" type="button">Traceability Matrix</button>
+                    <button class="tab-btn" data-tab="tab-settlement" type="button">Scope Valuation Reference</button>
+                    <button class="tab-btn" data-tab="tab-letter" type="button">Contractor Feedback Draft</button>
+                    <button class="tab-btn" data-tab="tab-export" type="button">Markdown Dossier Export</button>
+                </nav>
+
+                <!-- Tab 1: Traceability Matrix -->
+                <div id="tab-matrix" class="tab-pane active">
+                    <div class="pane-intro">
+                        <div>
+                            <h3>Requirement-to-Code Traceability</h3>
+                            <p>Every contractual requirement cross-referenced with empirical AST symbols and lines on disk.</p>
+                        </div>
+                    </div>
+                    <div id="criteriaList" class="criteria-list">
+                        <!-- Dynamically populated via app.js -->
+                    </div>
                 </div>
 
-                <div class="tab-content">
-                    <!-- Tab 1: Traceability Matrix -->
-                    <div id="tab-matrix" class="tab-pane active">
-                        <div class="pane-header">
-                            <h3>Requirement-to-Code Traceability</h3>
-                            <p class="pane-description">Every requirement is cross-referenced with empirical AST symbols and lines on disk.</p>
-                        </div>
-                        <div id="criteriaList" class="criteria-accordion">
-                            <!-- Populated dynamically via JS -->
+                <!-- Tab 2: Scope Valuation Reference -->
+                <div id="tab-settlement" class="tab-pane">
+                    <div class="pane-intro">
+                        <div>
+                            <h3>Scope Valuation & Unverified Criteria Breakdown</h3>
+                            <p>Informative mathematical breakdown proportional to verified criteria weights.</p>
                         </div>
                     </div>
+                    <div id="settlementDetails">
+                        <!-- Dynamically populated via app.js -->
+                    </div>
+                </div>
 
-                    <!-- Tab 2: Scope Valuation Reference -->
-                    <div id="tab-settlement" class="tab-pane">
-                        <div class="pane-header">
-                            <h3>Scope Valuation & Criteria Completion Reference</h3>
-                            <p class="pane-description">Informative mathematical breakdown proportional to verified criteria weights.</p>
+                <!-- Tab 3: Contractor Letter -->
+                <div id="tab-letter" class="tab-pane">
+                    <div class="pane-intro">
+                        <div>
+                            <h3>Collaborative Contractor Review Letter</h3>
+                            <p>Objective, constructive feedback acknowledging verified deliverables while detailing pending checklist items.</p>
                         </div>
-                        <div id="settlementDetails" class="settlement-breakdown">
-                            <!-- Populated dynamically via JS -->
+                        <div>
+                            <button id="copyLetterBtn" class="btn btn-secondary btn-sm" type="button">
+                                Copy Letter to Clipboard
+                            </button>
                         </div>
                     </div>
+                    <div class="code-preview-pane">
+                        <pre id="letterText"></pre>
+                    </div>
+                </div>
 
-                    <!-- Tab 3: Contractor Letter -->
-                    <div id="tab-letter" class="tab-pane">
-                        <div class="pane-header">
-                            <div class="flex-between">
-                                <div>
-                                    <h3>Diplomatic Contractor Review Draft</h3>
-                                    <p class="pane-description">Constructive, respectful communication acknowledging verified work while clearly stating unblocking criteria.</p>
-                                </div>
-                                <button id="copyLetterBtn" class="btn btn-secondary">📋 Copy Letter</button>
-                            </div>
+                <!-- Tab 4: Markdown Export -->
+                <div id="tab-export" class="tab-pane">
+                    <div class="pane-intro">
+                        <div>
+                            <h3>Comprehensive Markdown Audit Report</h3>
+                            <p>Full audit dossier formatted for GitHub pull request reviews, client archives, or audit records.</p>
                         </div>
-                        <div class="letter-box">
-                            <pre id="letterText"></pre>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button id="copyMarkdownBtn" class="btn btn-secondary btn-sm" type="button">
+                                Copy Markdown
+                            </button>
+                            <button id="downloadMarkdownBtn" class="btn btn-secondary btn-sm" type="button">
+                                Download .md File
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Tab 4: Markdown Export -->
-                    <div id="tab-export" class="tab-pane">
-                        <div class="pane-header">
-                            <div class="flex-between">
-                                <div>
-                                    <h3>Comprehensive Markdown Audit Report</h3>
-                                    <p class="pane-description">Exportable deliverable ready for project archives, clients, or Git PR review comments.</p>
-                                </div>
-                                <button id="copyMarkdownBtn" class="btn btn-secondary">📋 Copy Markdown</button>
-                            </div>
-                        </div>
-                        <div class="markdown-preview-box">
-                            <pre id="markdownExportText"></pre>
-                        </div>
+                    <div class="code-preview-pane">
+                        <pre id="markdownExportText"></pre>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- Footer -->
     <footer class="app-footer">
         <div class="footer-container">
             <div>
-                <strong>MilestoneProof</strong> — Open-Source SOW & Code Deliverable Verification Engine.
+                <strong>MilestoneProof</strong> — Open-Source SOW & Code Acceptance Auditor.
             </div>
             <div>
-                Configurable Open-Weight AI + Deterministic Python AST Scanner. Zero ungrounded claims.
+                Python AST Verification Scanner with Configurable Open-Weight Inference.
             </div>
         </div>
     </footer>
