@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "milestoneproof"
+version = "0.1.0"
+description = "Edge-native Statement of Work (SOW) & Subcontractor Deliverable Verification Engine with Open-Weight AI"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Ayush Gupta", email = "ayushgupta01506@gmail.com"}
+]
+keywords = [
+    "freelance",
+    "subcontractor",
+    "milestone-verification",
+    "sow",
+    "open-weight-ai",
+    "gemma",
+    "local-ai",
+    "hacktoberfest"
+]
+dependencies = [
+    "flask>=3.0.0",
+    "requests>=2.31.0",
+    "pydantic>=2.0.0"
+]
+
+[project.scripts]
+milestoneproof = "milestoneproof.cli:main"
