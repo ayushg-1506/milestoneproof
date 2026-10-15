@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MilestoneProof — Edge-Native SOW & Deliverable Verification Engine</title>
+    <meta name="description" content="Audit subcontracted code deliverables against contractual SOW acceptance criteria with local open-weight AI. Edge-native, zero-cloud data leakage.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="dark-theme">
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <div class="brand-logo">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="brand-text">Milestone<span class="brand-highlight">Proof</span></span>
+                </div>
+                <div class="brand-badges">
+                    <span class="badge badge-tech">Local Gemma / Phi-3</span>
+                    <span class="badge badge-privacy">100% On-Device Privacy</span>
+                </div>
+            </div>
+            <div class="header-status">
+                <div id="modelStatus" class="status-indicator">
+                    <span class="status-dot pulse"></span>
+                    <span id="modelStatusText">Checking Local AI Runtime...</span>
+                </div>
+                <button id="loadSampleBtn" class="btn btn-secondary">⚡ Load Demo SOW</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <!-- Input Section -->
+        <section class="section-inputs">
+            <div class="grid-two-col">
+                <!-- SOW Editor Card -->
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="card-icon">📋</span>
+                            <h2>Statement of Work (SOW) Specification</h2>
+                        </div>
+                        <span class="card-subtitle">Contractual Deliverables & Acceptance Criteria</span>
+                    </div>
+                    <div class="card-body">
+                        <textarea id="sowInput" class="code-editor" placeholder="Paste your Statement of Work in Markdown or click 'Load Demo SOW' above..." rows="12"></textarea>
+                    </div>
+                </div>
+
+                <!-- Deliverable Directory Card -->
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="card-icon">📂</span>
+                            <h2>Subcontractor Deliverable Artifacts</h2>
+                        </div>
+                        <span class="card-subtitle">Target Code Repository / Git Directory</span>
+                    </div>
+                    <div class="card-body deliverable-control">
+                        <div class="form-group">
+                            <label for="deliverablePathInput">Absolute Path to Codebase / PR Extract:</label>
+                            <div class="input-with-button">
+                                <input type="text" id="deliverablePathInput" class="text-input" placeholder="/absolute/path/to/deliverable/repo">
+                            </div>
+                        </div>
+
+                        <div class="audit-features">
+                            <div class="feature-item">
+                                <span class="feature-check">✓</span>
+                                <div><strong>Deterministic AST Scanning:</strong> Extracts routes, functions, classes, and test fixtures directly from source files.</div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-check">✓</span>
+                                <div><strong>Line-Accurate Evidence Citations:</strong> Links every contract criterion to actual verified lines on disk.</div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-check">✓</span>
+                                <div><strong>NDA & IP Safe:</strong> Source code never leaves your laptop. Zero cloud token bills.</div>
+                            </div>
+                        </div>
+
+                        <div class="action-footer">
+                            <button id="runAuditBtn" class="btn btn-primary btn-large glow-btn">
+                                <span class="btn-icon">⚡</span> Run Deliverable Audit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <div id="auditLoading" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <div class="loading-title">Auditing Deliverable Codebase...</div>
+            <div class="loading-subtitle">Inspecting AST symbols, cryptographic checks, test suites, and running open-weight semantic verification.</div>
+        </div>
+
+        <!-- Audit Results Section -->
+        <section id="resultsSection" class="section-results hidden">
+            <!-- Top Metrics Bar -->
+            <div class="metrics-grid">
+                <div class="metric-card glass-card">
+                    <div class="metric-label">Milestone Contract</div>
+                    <div id="metricMilestoneAmount" class="metric-value">$0.00</div>
+                    <div id="metricProjectName" class="metric-sub">Client Project</div>
+                </div>
+
+                <div class="metric-card glass-card border-success">
+                    <div class="metric-label">Recommended Release</div>
+                    <div id="metricReleaseAmount" class="metric-value text-success">$0.00</div>
+                    <div id="metricVerifiedPercent" class="metric-sub text-success">0.0% Verified</div>
+                </div>
+
+                <div class="metric-card glass-card border-warning">
+                    <div class="metric-label">Retained Escrow Sum</div>
+                    <div id="metricRetainedAmount" class="metric-value text-warning">$0.00</div>
+                    <div class="metric-sub">Held Pending Gaps</div>
+                </div>
+
+                <div class="metric-card glass-card">
+                    <div class="metric-label">Compliance Breakdown</div>
+                    <div class="breakdown-pills">
+                        <span id="pillVerified" class="pill pill-success">0 Verified</span>
+                        <span id="pillPartial" class="pill pill-warning">0 Partial</span>
+                        <span id="pillMissing" class="pill pill-danger">0 Missing</span>
+                    </div>
+                    <div class="metric-sub">Across All Criteria</div>
+                </div>
+            </div>
+
+            <!-- Tabbed Results Area -->
+            <div class="card glass-card results-container">
+                <div class="tabs-header">
+                    <button class="tab-btn active" data-tab="tab-matrix">🔍 Traceability Matrix</button>
+                    <button class="tab-btn" data-tab="tab-settlement">💰 Financial Settlement</button>
+                    <button class="tab-btn" data-tab="tab-letter">✉️ Contractor Feedback Letter</button>
+                    <button class="tab-btn" data-tab="tab-export">📝 Full Markdown Report</button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- Tab 1: Traceability Matrix -->
+                    <div id="tab-matrix" class="tab-pane active">
+                        <div class="pane-header">
+                            <h3>Requirement-to-Code Traceability</h3>
+                            <p class="pane-description">Every requirement is cross-referenced with empirical AST symbols and lines on disk.</p>
+                        </div>
+                        <div id="criteriaList" class="criteria-accordion">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Financial Settlement -->
+                    <div id="tab-settlement" class="tab-pane">
+                        <div class="pane-header">
+                            <h3>Milestone Payout & Deduction Analysis</h3>
+                            <p class="pane-description">Deterministic financial breakdown protecting agency margins and preventing premature release.</p>
+                        </div>
+                        <div id="settlementDetails" class="settlement-breakdown">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Contractor Letter -->
+                    <div id="tab-letter" class="tab-pane">
+                        <div class="pane-header">
+                            <div class="flex-between">
+                                <div>
+                                    <h3>Diplomatic Contractor Review Draft</h3>
+                                    <p class="pane-description">Constructive, respectful communication acknowledging verified work while clearly stating unblocking criteria.</p>
+                                </div>
+                                <button id="copyLetterBtn" class="btn btn-secondary">📋 Copy Letter</button>
+                            </div>
+                        </div>
+                        <div class="letter-box">
+                            <pre id="letterText"></pre>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Markdown Export -->
+                    <div id="tab-export" class="tab-pane">
+                        <div class="pane-header">
+                            <div class="flex-between">
+                                <div>
+                                    <h3>Comprehensive Markdown Audit Report</h3>
+                                    <p class="pane-description">Exportable deliverable ready for project archives, clients, or Git PR review comments.</p>
+                                </div>
+                                <button id="copyMarkdownBtn" class="btn btn-secondary">📋 Copy Markdown</button>
+                            </div>
+                        </div>
+                        <div class="markdown-preview-box">
+                            <pre id="markdownExportText"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <div class="footer-container">
+            <div>
+                <strong>MilestoneProof</strong> — Open-Source AI Side Hustle Project for Hacktoberfest 2026 Week 2.
+            </div>
+            <div>
+                Built with Google Gemma 2 & Python AST. Zero cloud telemetry.
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
