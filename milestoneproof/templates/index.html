@@ -111,15 +111,15 @@
                 </div>
 
                 <div class="metric-card glass-card border-success">
-                    <div class="metric-label">Recommended Release</div>
+                    <div class="metric-label">Proportional Scope Completed</div>
                     <div id="metricReleaseAmount" class="metric-value text-success">$0.00</div>
-                    <div id="metricVerifiedPercent" class="metric-sub text-success">0.0% Verified</div>
+                    <div id="metricVerifiedPercent" class="metric-sub text-success">0.0% Verified (Reference Only)</div>
                 </div>
 
                 <div class="metric-card glass-card border-warning">
-                    <div class="metric-label">Retained Escrow Sum</div>
+                    <div class="metric-label">Unverified Scope Value</div>
                     <div id="metricRetainedAmount" class="metric-value text-warning">$0.00</div>
-                    <div class="metric-sub">Held Pending Gaps</div>
+                    <div class="metric-sub">Pending Unverified Criteria</div>
                 </div>
 
                 <div class="metric-card glass-card">
@@ -133,11 +133,16 @@
                 </div>
             </div>
 
+            <!-- Top Disclaimer Banner -->
+            <div style="background:rgba(99, 102, 241, 0.08); border:1px solid rgba(99, 102, 241, 0.25); border-radius:var(--radius-md); padding:0.75rem 1.25rem; font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.5rem;">
+                ℹ️ <strong>Reviewer Note:</strong> MilestoneProof provides evidence-linked acceptance findings and proportional scope references. All contractual and payment decisions remain under the sole discretion of the human project reviewer.
+            </div>
+
             <!-- Tabbed Results Area -->
             <div class="card glass-card results-container">
                 <div class="tabs-header">
                     <button class="tab-btn active" data-tab="tab-matrix">🔍 Traceability Matrix</button>
-                    <button class="tab-btn" data-tab="tab-settlement">💰 Financial Settlement</button>
+                    <button class="tab-btn" data-tab="tab-settlement">📊 Scope Valuation Reference</button>
                     <button class="tab-btn" data-tab="tab-letter">✉️ Contractor Feedback Letter</button>
                     <button class="tab-btn" data-tab="tab-export">📝 Full Markdown Report</button>
                 </div>
@@ -154,11 +159,11 @@
                         </div>
                     </div>
 
-                    <!-- Tab 2: Financial Settlement -->
+                    <!-- Tab 2: Scope Valuation Reference -->
                     <div id="tab-settlement" class="tab-pane">
                         <div class="pane-header">
-                            <h3>Milestone Payout & Deduction Analysis</h3>
-                            <p class="pane-description">Deterministic financial breakdown protecting agency margins and preventing premature release.</p>
+                            <h3>Scope Valuation & Criteria Completion Reference</h3>
+                            <p class="pane-description">Informative mathematical breakdown proportional to verified criteria weights.</p>
                         </div>
                         <div id="settlementDetails" class="settlement-breakdown">
                             <!-- Populated dynamically via JS -->

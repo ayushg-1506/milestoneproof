@@ -127,7 +127,9 @@ Output JSON only.
             "format": "json",
             "options": {
                 "temperature": 0.1,
-                "top_p": 0.9
+                "top_p": 0.9,
+                "num_ctx": 256,
+                "num_batch": 64
             }
         }
 

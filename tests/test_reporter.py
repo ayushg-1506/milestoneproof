@@ -69,7 +69,7 @@ class TestReportGenerator(unittest.TestCase):
         self.assertIn("Hi David Chen,", letter)
         self.assertIn("AC-1 - JWT Authentication", letter)
         self.assertIn("Rate Limiter", letter)
-        self.assertIn("temporarily holding", letter)
+        self.assertIn("appear incomplete or have missing evidence", letter)
 
 
 if __name__ == "__main__":

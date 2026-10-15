@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
             criteriaList.appendChild(card);
         });
 
-        // Render Settlement Details
+        // Render Settlement / Valuation Details
         let deductionsHtml = "";
         if (s.deductions && s.deductions.length > 0) {
             deductionsHtml = `
@@ -204,8 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         <tr style="border-bottom:1px solid var(--border-color); text-align:left; color:var(--text-muted);">
                             <th style="padding:0.6rem;">Requirement</th>
                             <th style="padding:0.6rem;">Status</th>
-                            <th style="padding:0.6rem;">Escrow Withheld</th>
-                            <th style="padding:0.6rem;">Contractual Justification</th>
+                            <th style="padding:0.6rem;">Proportional Scope Value</th>
+                            <th style="padding:0.6rem;">Finding / Gap Detail</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -221,24 +221,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 </table>
             `;
         } else {
-            deductionsHtml = `<div style="padding:1rem; background:var(--success-bg); border:1px solid var(--success-border); border-radius:8px; color:var(--success);">✓ 100% of acceptance criteria verified. No deductions applied. Full payout approved.</div>`;
+            deductionsHtml = `<div style="padding:1rem; background:var(--success-bg); border:1px solid var(--success-border); border-radius:8px; color:var(--success);">✓ 100% of acceptance criteria verified with empirical code proof.</div>`;
         }
 
         settlementDetails.innerHTML = `
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
                 <div style="background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:8px; border:1px solid var(--border-color);">
-                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase;">Immediate Release Payout</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase;">Verified Scope Value (Reference)</div>
                     <div style="font-size:2rem; font-weight:700; color:var(--success); margin:0.3rem 0;">$${s.recommended_release_amount.toLocaleString(undefined, {minimumFractionDigits: 2})} ${s.currency}</div>
-                    <p style="font-size:0.82rem; color:var(--text-secondary);">Calculated from ${s.verified_percentage}% weighted criteria completion. Safe to disburse without project risk.</p>
+                    <p style="font-size:0.82rem; color:var(--text-secondary);">Proportional value of verified criteria (${s.verified_percentage}% weighted score). Provided for reviewer reference.</p>
                 </div>
                 <div style="background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:8px; border:1px solid var(--border-color);">
-                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase;">Retained Escrow Protection</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase;">Unverified Scope Value</div>
                     <div style="font-size:2rem; font-weight:700; color:var(--warning); margin:0.3rem 0;">$${s.retained_escrow_amount.toLocaleString(undefined, {minimumFractionDigits: 2})} ${s.currency}</div>
-                    <p style="font-size:0.82rem; color:var(--text-secondary);">Withheld pending resolution of incomplete acceptance criteria.</p>
+                    <p style="font-size:0.82rem; color:var(--text-secondary);">Milestone value corresponding to unverified or partially implemented criteria.</p>
                 </div>
             </div>
-            <h4 style="margin-top:1.5rem; font-size:1rem; color:var(--text-primary);">Itemized Escrow Deductions</h4>
+            <h4 style="margin-top:1.5rem; font-size:1rem; color:var(--text-primary);">Itemized Criteria Gap Breakdown</h4>
             ${deductionsHtml}
+            <div style="margin-top:1.25rem; font-size:0.8rem; color:var(--text-muted); font-style:italic;">
+                * Note: Monies and percentages are mathematical references derived from agreed criteria weights. All formal acceptance, contract amendments, and payment releases remain at the sole discretion of the human reviewer.
+            </div>
         `;
 
         // Render Letter & Markdown

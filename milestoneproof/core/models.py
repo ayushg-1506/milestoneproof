@@ -58,13 +58,17 @@ class CriterionVerification(BaseModel):
 
 
 class FinancialSettlement(BaseModel):
-    """Deterministic financial payout calculation based on verified deliverables."""
+    """Informative milestone valuation reference based on verified deliverable weights."""
     milestone_amount: float
     currency: str = "USD"
     verified_percentage: float = Field(..., description="Percentage of weighted criteria verified (0-100)")
-    recommended_release_amount: float = Field(..., description="Amount immediately recommended for release")
-    retained_escrow_amount: float = Field(..., description="Amount retained until missing criteria are resolved")
-    deductions: List[Dict[str, Any]] = Field(default_factory=list, description="Itemized breakdown of withheld sums")
+    recommended_release_amount: float = Field(..., description="Proportional value of verified deliverables (reference only)")
+    retained_escrow_amount: float = Field(..., description="Remaining milestone value associated with unverified or gap criteria")
+    deductions: List[Dict[str, Any]] = Field(default_factory=list, description="Itemized breakdown of unverified criteria and associated values")
+    disclaimer: str = Field(
+        default="Informative mathematical reference only. All acceptance and payment decisions remain at the sole discretion of the human reviewer.",
+        description="Legal and contractual disclaimer"
+    )
 
 
 class AuditReport(BaseModel):

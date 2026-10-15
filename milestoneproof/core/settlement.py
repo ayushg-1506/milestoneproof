@@ -1,7 +1,8 @@
 """
-Financial Settlement & Milestone Deduction Calculator for MilestoneProof.
-Calculates objective, contract-grounded payout recommendations and itemized
-escrow retention sums based on verified deliverables.
+Milestone Scope Valuation & Criteria Completion Calculator for MilestoneProof.
+Calculates objective, contract-grounded criteria completion metrics and proportional
+valuation references. All contractual and payment decisions remain under the sole
+discretion and authority of the human reviewer.
 """
 
 from typing import List, Dict, Any
@@ -13,7 +14,7 @@ from milestoneproof.core.models import (
 
 
 class SettlementCalculator:
-    """Calculates payout percentages, release sums, and itemized deductions."""
+    """Calculates weighted completion percentages and informative valuation references."""
 
     @classmethod
     def calculate(
