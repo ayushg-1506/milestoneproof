@@ -57,15 +57,31 @@ class MilestoneVerifier:
                     citations=citations,
                     reasoning=eval_result["reasoning"],
                     gap_description=eval_result.get("gap_description"),
-                    remediation_steps=eval_result.get("remediation_steps")
+                    remediation_steps=eval_result.get("remediation_steps"),
+                    evaluator=eval_result.get("evaluator", "DETERMINISTIC_ENGINE"),
+                    evaluator_details=eval_result.get("evaluator_details")
                 )
             )
 
         # 3. Calculate financial settlement
         settlement = SettlementCalculator.calculate(sow, verifications)
 
-        # 4. Synthesize final audit report and contractor communication
+        # 4. Determine overall audit mode
+        has_ai = any(v.evaluator == "AI_MODEL" for v in verifications)
+        has_fallback = any(v.evaluator == "DETERMINISTIC_FALLBACK" for v in verifications)
+        if has_ai and not has_fallback:
+            audit_mode = "AI_MODEL"
+        elif has_ai and has_fallback:
+            audit_mode = "HYBRID_FALLBACK"
+        elif has_fallback:
+            audit_mode = "DETERMINISTIC_FALLBACK"
+        else:
+            audit_mode = "DETERMINISTIC_ENGINE"
+
+        # 5. Synthesize final audit report and contractor communication
         report = ReportGenerator.create_audit_report(sow, verifications, settlement)
+        report.audit_mode = audit_mode
+        report.model_name = self.llm.model_name if (has_ai or self.llm.is_model_available) else None
         return report
 
     @classmethod

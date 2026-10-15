@@ -49,3 +49,5 @@ htmlcov/
 *.pem
 *.key
 credentials.json
+*.zip
+mp_audit_*

@@ -1,74 +1,59 @@
 # 🛡️ MilestoneProof
 
-> **Edge-Native Statement of Work (SOW) & Subcontractor Deliverable Verification Engine with Open-Weight AI**
+> **SOW & Subcontractor Deliverable Verification Engine with Open-Weight AI**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hacktoberfest 2026](https://img.shields.io/badge/Hacktoberfest-2026%20Week%202-orange.svg)](https://dev.to/challenges/hacktoberfest-week2-2026-10-12)
-[![Local Models](https://img.shields.io/badge/Model-Phi--3%20%7C%20Gemma%202-indigo.svg)](https://ollama.ai)
+[![Models](https://img.shields.io/badge/Models-Llama--3.2%20%7C%20Gemma%202%20%7C%20Qwen-indigo.svg)](https://huggingface.co)
 
 ---
 
-## The Problem: The Milestone Verification Dilemma
+## The Problem: The Milestone Verification Bottleneck
 
-In the modern freelance and agency economy, solopreneurs, boutique dev studios, and fractional technical leaders outsource discrete modules to subcontractors on platforms like Upwork, Contra, or direct contracts.
+In technical freelancing and agency operations, consultants, solo founders, and technical leads outsource discrete modules to subcontractors on platforms like Upwork, Contra, or direct contract agreements: an authentication flow, a payment webhook handler, or a data ingestion pipeline.
 
-A contractor submits an invoice claiming:
-> *"Milestone 2 complete! Implemented auth, Stripe webhooks, and rate limiting. Please release the $2,500 milestone."*
-
-The hiring project lead faces a tedious and sensitive dilemma:
-1. **The Verification Drain**: Manually inspecting dozens of source code files, route definitions, and test fixtures against the contractual Statement of Work (SOW) requires extensive manual diffing.
-2. **The Incomplete Deliverable Risk**: Deliverables can easily miss key requirements—such as omitted cryptographic signature verification, skipped rate limiting, or stubbed mock tests. If approved hastily, the agency must fix the gaps or absorb client churn.
-3. **The Interpersonal Friction**: Addressing unverified deliverables without clear, line-level evidence can provoke disputes and strain contractor relationships.
-
-Existing tools fail this workflow:
-- **Receipt sorters** only categorize past business expenses into CSVs.
-- **Contract scanners** only check for clauses before signing.
-- **Generic code linters** focus on syntax and formatting, unaware of contractual milestone acceptance criteria.
+When a contractor marks a milestone ready for review, you face an immediate verification bottleneck:
+1. **Inspection Overhead**: Manually checking dozens of source files against the Statement of Work (SOW), inspecting route definitions, checking test suites, and confirming that acceptance criteria are actually met consumes substantial unbilled attention.
+2. **Incomplete Delivery Risk**: Subcontractors sometimes miss specific requirements—such as omitting cryptographic signature verification on webhooks, leaving rate-limiting middleware unimplemented, or writing minimal happy-path tests. If an incomplete deliverable is accepted without inspection, the hiring developer inherits technical debt and unbilled rework.
+3. **Subjective Communication Friction**: Addressing unverified deliverables without concrete, file-by-file citations can feel confrontational. Clear, line-level evidence helps keep communication professional, constructive, and productive.
 
 ---
 
 ## The Solution: MilestoneProof
 
-**MilestoneProof** is an edge-native deliverable auditor that runs locally on your machine. It pairs deterministic Python AST parsing with local open-weight AI (such as Phi-3 or Gemma via Ollama) to trace deliverable code against contractual acceptance criteria.
+**MilestoneProof** is a deliverable verification application designed to run locally or deploy directly on Render. It compares a Markdown Statement of Work with a deliverable codebase, using deterministic Python Abstract Syntax Tree (AST) scanning combined with open-weight model evaluation (or a transparent deterministic rule engine).
 
 ```mermaid
 graph TD
     A[Contract SOW / Markdown Spec] --> B[SOW Parser & Criteria Decomposer]
-    C[Deliverable Repository / PR] --> D[Deterministic AST & File Manifest Scanner]
-    B --> E[Compliance Engine<br/>Local Model via Ollama or AST Rule Fallback]
+    C[Uploaded ZIP Codebase / PR Extract] --> D[Secure Tempdir Extraction & AST Scanner]
+    B --> E[Verification Engine<br/>External Open-Weight Model or Deterministic Rules]
     D --> E
     E --> F[Milestone Verification Matrix<br/>VERIFIED | PARTIAL | MISSING]
-    F --> G[Proportional Scope Valuation<br/>Informational Completed vs. Unverified Scope]
+    F --> G[Proportional Scope Valuation Reference<br/>Informational Completed vs. Unverified Scope]
     F --> H[Collaborative Contractor Review Letter]
     F --> I[Exportable Markdown & HTML Audit Dossier]
 ```
 
 ### Key Capabilities
 
+- 📦 **Browser ZIP Codebase Upload**: Upload deliverable code as a `.zip` archive. The server safely validates against path traversal (Zip Slip), unpacks in an isolated temporary directory, and automatically cleans up after the audit.
 - 🔍 **Line-Accurate Evidence Citations**: Every requirement is traced to exact source files, function signatures, route decorators, and line numbers on disk.
-- ⚖️ **Proportional Scope Valuation (Reference Only)**: Computes proportional financial scope completed and itemizes unverified scope value for reviewer reference. Payment and contractual decisions remain entirely with the human reviewer.
-- ✉️ **Collaborative Contractor Feedback Draft**: Synthesizes a constructive review letter acknowledging verified deliverables and outlining specific checklist items needed to complete remaining requirements.
-- 🔒 **100% On-Device Privacy**: Deliverable code and contract terms are analyzed locally without transmitting proprietary code to multi-tenant cloud APIs. Zero cloud token bills.
+- 🤖 **Configurable Open-Weight Model Engine**: Connects via environment variables to any OpenAI-compatible open-weight inference provider (Groq, Hugging Face Serverless, OpenRouter) or local/remote Ollama.
+- ⚙️ **Transparent Attribution**: Every finding is explicitly labeled with its evaluator (`AI_MODEL`, `DETERMINISTIC_ENGINE`, or `DETERMINISTIC_FALLBACK`). Deterministic results are never misattributed as AI findings.
+- ⚖️ **Proportional Scope Valuation Reference**: Computes an informational scope completion score derived from weighted criteria.
+- ⚠️ **Legal & Reviewer Advisory Disclaimer**: All findings and financial calculations are informative references. All contractual compliance determinations, milestone acceptance decisions, and financial disbursements remain under the sole discretion and authority of the human reviewer.
 
 ---
 
-## Why Open-Source & Local Processing Matters
-
-1. **Client NDAs & Code Privacy**: Sharing unreleased client source code and proprietary milestone specifications with third-party cloud APIs can raise confidentiality and compliance issues. Local processing on developer workstations protects privacy.
-2. **Zero Marginal Inference Cost**: Auditing milestones and PR iterations locally incurs zero ongoing cloud token fees.
-3. **Deterministic Verification**: Deterministic AST extractors ensure that every cited symbol and line number exists on disk.
-
----
-
-## Quickstart & Installation
+## Quickstart: Local Setup
 
 ### 1. Prerequisites
 - Python 3.10+
-- (Optional) [Ollama](https://ollama.ai/) with `phi3:latest` or `gemma:2b` for semantic reasoning.
-  > **Note**: When local LLM inference is unavailable or constrained by host RAM, MilestoneProof routes automatically to its deterministic AST/regex rule engine (which operates via rule-based inspection rather than AI inference).
+- (Optional) Free API key from an open-weight inference provider (e.g. [Groq](https://console.groq.com), [Hugging Face](https://huggingface.co/settings/tokens), or [OpenRouter](https://openrouter.ai)). If no key is provided, MilestoneProof runs in deterministic demo mode.
 
-### 2. Setup
+### 2. Installation
 ```bash
 # Clone the repository
 git clone https://github.com/ayushg-1506/milestoneproof.git
@@ -78,53 +63,90 @@ cd milestoneproof
 pip install -r requirements.txt
 ```
 
-### 3. Run Built-In Synthetic Demo Audit
+### 3. Environment Configuration (Optional)
+Copy `.env.example` to `.env` to configure an open-weight inference provider:
+```bash
+cp .env.example .env
+```
+
+Example configuration for Groq (free tier):
+```env
+MODEL_API_BASE=https://api.groq.com/openai/v1
+MODEL_API_KEY=your_groq_api_key_here
+MODEL_NAME=llama-3.1-8b-instant
+```
+
+Example configuration for Hugging Face Serverless (free with HF user token):
+```env
+MODEL_API_BASE=https://api-inference.huggingface.co/v1
+MODEL_API_KEY=your_hf_token_here
+MODEL_NAME=meta-llama/Llama-3.2-3B-Instruct
+```
+
+### 4. Run the Web Application
+```bash
+python -m milestoneproof.app
+```
+Or with Gunicorn (production server):
+```bash
+gunicorn -w 2 -b 0.0.0.0:5000 milestoneproof.app:app
+```
+Open **http://localhost:5000** in your browser to inspect the application.
+
+### 5. Run the CLI Demo
 ```bash
 python -m milestoneproof.cli demo
 ```
 
-### 4. Audit Your Own Deliverable
-```bash
-python -m milestoneproof.cli audit \
-  --sow ./examples/sample_sow_auth_payment.md \
-  --deliverable ./examples/sample_deliverable \
-  --output ./audit_report.md
-```
+---
 
-### 5. Launch Interactive Web Dashboard
-```bash
-python -m milestoneproof.cli serve --port 5000
-```
-Open [http://localhost:5000](http://localhost:5000) in your browser to inspect the interactive dashboard, view AST citations, review proportional reference calculations, and export findings.
+## Deploying on Render (Free Python Web Service)
+
+MilestoneProof is ready for 1-click deployment on [Render](https://render.com).
+
+### Step-by-Step Render Deployment:
+1. **Push your repository** to GitHub (private or public).
+2. **Log into Render** ([render.com](https://render.com)) and click **New +** -> **Web Service**.
+3. **Connect your GitHub repository**.
+4. Configure the service settings:
+   - **Name**: `milestoneproof`
+   - **Environment**: `Python 3`
+   - **Region**: Choose the closest region
+   - **Branch**: `main`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn -w 2 -b 0.0.0.0:$PORT milestoneproof.app:app`
+   - **Plan**: `Free`
+5. **Set Environment Variables** (under **Environment** tab):
+   - `PORT`: `10000`
+   - `FLASK_ENV`: `production`
+   - `MODEL_API_BASE`: (e.g. `https://api.groq.com/openai/v1` or `https://api-inference.huggingface.co/v1`)
+   - `MODEL_API_KEY`: Your secret API key
+   - `MODEL_NAME`: (e.g. `llama-3.1-8b-instant` or `meta-llama/Llama-3.2-3B-Instruct`)
+   *(Note: If you omit `MODEL_API_KEY`, MilestoneProof deploys and runs cleanly in Deterministic Demo Mode).*
+6. Click **Deploy Web Service**. Render builds the service and exposes a public HTTPS URL (e.g. `https://milestoneproof.onrender.com`).
+
+Alternatively, use the included `render.yaml` blueprint:
+1. In Render, select **Blueprints** -> **New Blueprint Instance**.
+2. Connect your repo; Render will automatically detect `render.yaml` and configure the service.
 
 ---
 
-## Testing & Verification
+## Testing & Quality Verification
 
-MilestoneProof includes an automated test suite with 15 tests:
+MilestoneProof includes 28 automated unit and integration tests covering AST scanning, SOW parsing, ZIP upload safety, model response parsing, and error fallback:
 
 ```bash
 python -m unittest discover tests
 ```
 
-Tests verify:
-- Markdown table and bullet SOW criteria parsing.
-- Deterministic AST function, route, and test suite extraction.
-- Edge-case security detection (e.g., catching missing Stripe webhook HMAC signatures).
-- Proportional scope reference calculations and capping logic.
-- End-to-end audit pipelines and Flask REST API endpoints.
-
----
-
-## Plausible Commercialization
-
-MilestoneProof is architected as an edge-native micro-SaaS:
-- **Solo Freelance / Consultant Tier**: $19/month or $49 one-time desktop license.
-- **Agency Studio Tier**: $79/month with multi-repo support and team templates.
-- **Value Proposition**: Catching unverified or missing deliverables before milestone sign-off prevents unpaid rework and streamlines code review.
+### Test Coverage Highlights:
+- **ZIP Safety & Sandboxing**: Verifies that directory traversal (`../../etc/passwd`), non-zip payloads, and oversized archives are blocked.
+- **Multipart API Uploads**: Verifies browser uploads of SOW files and deliverable ZIP archives.
+- **External Model Parsing**: Verifies JSON schema compliance, markdown fence stripping, and list-to-string normalization.
+- **Transparent Fallback**: Verifies that API timeouts, 429 rate limits, and network errors gracefully fall back to deterministic AST rules with explicit attribution.
 
 ---
 
 ## License
 
-MIT License. Open-source for Hacktoberfest 2026 Week 2: Side Hustle.
+MIT License. Built for the Hacktoberfest 2026 Week 2 Open-Source AI Challenge.

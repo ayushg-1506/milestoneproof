@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MilestoneProof — Edge-Native SOW & Deliverable Verification Engine</title>
-    <meta name="description" content="Audit subcontracted code deliverables against contractual SOW acceptance criteria with local open-weight AI. Edge-native, zero-cloud data leakage.">
+    <title>MilestoneProof — SOW & Code Deliverable Verification Engine</title>
+    <meta name="description" content="Audit subcontracted code deliverables against contractual SOW acceptance criteria with open-weight AI and deterministic AST scanning.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -19,14 +19,14 @@
                     <span class="brand-text">Milestone<span class="brand-highlight">Proof</span></span>
                 </div>
                 <div class="brand-badges">
-                    <span class="badge badge-tech">Local Gemma / Phi-3</span>
-                    <span class="badge badge-privacy">100% On-Device Privacy</span>
+                    <span class="badge badge-tech" id="brandTechBadge">Open-Weight AI</span>
+                    <span class="badge badge-privacy">AST Deterministic Proof</span>
                 </div>
             </div>
             <div class="header-status">
                 <div id="modelStatus" class="status-indicator">
                     <span class="status-dot pulse"></span>
-                    <span id="modelStatusText">Checking Local AI Runtime...</span>
+                    <span id="modelStatusText">Checking Model Engine...</span>
                 </div>
                 <button id="loadSampleBtn" class="btn btn-secondary">⚡ Load Demo SOW</button>
             </div>
@@ -39,47 +39,68 @@
             <div class="grid-two-col">
                 <!-- SOW Editor Card -->
                 <div class="card glass-card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <span class="card-icon">📋</span>
-                            <h2>Statement of Work (SOW) Specification</h2>
+                    <div class="card-header flex-between">
+                        <div>
+                            <div class="card-title">
+                                <span class="card-icon">📋</span>
+                                <h2>Statement of Work (SOW)</h2>
+                            </div>
+                            <span class="card-subtitle">Contractual Deliverables & Acceptance Criteria</span>
                         </div>
-                        <span class="card-subtitle">Contractual Deliverables & Acceptance Criteria</span>
+                        <div>
+                            <button id="uploadSowBtn" class="btn btn-secondary btn-sm" type="button">📁 Upload .md</button>
+                            <input type="file" id="sowFileInput" accept=".md,.markdown,.txt" style="display:none">
+                        </div>
                     </div>
                     <div class="card-body">
                         <textarea id="sowInput" class="code-editor" placeholder="Paste your Statement of Work in Markdown or click 'Load Demo SOW' above..." rows="12"></textarea>
                     </div>
                 </div>
 
-                <!-- Deliverable Directory Card -->
+                <!-- Deliverable Upload Card -->
                 <div class="card glass-card">
                     <div class="card-header">
                         <div class="card-title">
                             <span class="card-icon">📂</span>
-                            <h2>Subcontractor Deliverable Artifacts</h2>
+                            <h2>Subcontractor Deliverable Codebase</h2>
                         </div>
-                        <span class="card-subtitle">Target Code Repository / Git Directory</span>
+                        <span class="card-subtitle">Upload Codebase Archive (.zip) or Select Demo</span>
                     </div>
                     <div class="card-body deliverable-control">
-                        <div class="form-group">
-                            <label for="deliverablePathInput">Absolute Path to Codebase / PR Extract:</label>
-                            <div class="input-with-button">
-                                <input type="text" id="deliverablePathInput" class="text-input" placeholder="/absolute/path/to/deliverable/repo">
-                            </div>
+                        <!-- Drop Zone -->
+                        <div id="dropZone" class="drop-zone">
+                            <div class="drop-zone-icon">📦</div>
+                            <div class="drop-zone-text">Drop deliverable codebase <strong>.zip</strong> archive here</div>
+                            <div class="drop-zone-hint">or click to browse from your computer (max 25 MB)</div>
                         </div>
+                        <input type="file" id="zipFileInput" accept=".zip" style="display:none">
+
+                        <!-- Selected File Display -->
+                        <div id="selectedFileContainer" class="hidden" style="margin-top:0.75rem;">
+                            <span class="file-pill">
+                                📦 <span id="selectedFileName">codebase.zip</span> (<span id="selectedFileSize">0 KB</span>)
+                                <span id="removeFileBtn" class="file-pill-remove" title="Remove archive">✕</span>
+                            </span>
+                        </div>
+
+                        <!-- Bundled Demo Toggle -->
+                        <label class="demo-toggle-group">
+                            <input type="checkbox" id="useDemoDeliverable">
+                            <span><strong>Or use bundled demo deliverable</strong> (Alex Rivera — SaaS Auth & Webhook codebase)</span>
+                        </label>
 
                         <div class="audit-features">
                             <div class="feature-item">
                                 <span class="feature-check">✓</span>
-                                <div><strong>Deterministic AST Scanning:</strong> Extracts routes, functions, classes, and test fixtures directly from source files.</div>
+                                <div><strong>Safe Sandbox Extraction:</strong> Extracted into an isolated temporary directory and immediately deleted after audit.</div>
                             </div>
                             <div class="feature-item">
                                 <span class="feature-check">✓</span>
-                                <div><strong>Line-Accurate Evidence Citations:</strong> Links every contract criterion to actual verified lines on disk.</div>
+                                <div><strong>Deterministic AST Scanner:</strong> Inspects routes, functions, classes, and test suites with line-accurate citations.</div>
                             </div>
                             <div class="feature-item">
                                 <span class="feature-check">✓</span>
-                                <div><strong>NDA & IP Safe:</strong> Source code never leaves your laptop. Zero cloud token bills.</div>
+                                <div><strong>Advisory Valuation:</strong> Mathematical scope completion reference; humans retain sole payment authority.</div>
                             </div>
                         </div>
 
@@ -97,7 +118,7 @@
         <div id="auditLoading" class="loading-overlay hidden">
             <div class="loading-spinner"></div>
             <div class="loading-title">Auditing Deliverable Codebase...</div>
-            <div class="loading-subtitle">Inspecting AST symbols, cryptographic checks, test suites, and running open-weight semantic verification.</div>
+            <div class="loading-subtitle">Extracting archive, scanning AST symbols, verifying cryptographic checks, and evaluating acceptance criteria.</div>
         </div>
 
         <!-- Audit Results Section -->
@@ -129,13 +150,13 @@
                         <span id="pillPartial" class="pill pill-warning">0 Partial</span>
                         <span id="pillMissing" class="pill pill-danger">0 Missing</span>
                     </div>
-                    <div class="metric-sub">Across All Criteria</div>
+                    <div id="metricAuditMode" class="metric-sub">Audit Mode: Checking...</div>
                 </div>
             </div>
 
-            <!-- Top Disclaimer Banner -->
-            <div style="background:rgba(99, 102, 241, 0.08); border:1px solid rgba(99, 102, 241, 0.25); border-radius:var(--radius-md); padding:0.75rem 1.25rem; font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.5rem;">
-                ℹ️ <strong>Reviewer Note:</strong> MilestoneProof provides evidence-linked acceptance findings and proportional scope references. All contractual and payment decisions remain under the sole discretion of the human project reviewer.
+            <!-- Reviewer Advisory Banner -->
+            <div style="background:rgba(99, 102, 241, 0.08); border:1px solid rgba(99, 102, 241, 0.25); border-radius:var(--radius-md); padding:0.85rem 1.25rem; font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.5;">
+                ℹ️ <strong>Reviewer Advisory & Disclaimer:</strong> MilestoneProof generates automated, evidence-linked verification findings and proportional scope references for technical reviewers. All contractual compliance determinations, milestone acceptance decisions, and financial disbursements remain under the sole authority and discretion of the human project reviewer.
             </div>
 
             <!-- Tabbed Results Area -->
@@ -209,10 +230,10 @@
     <footer class="app-footer">
         <div class="footer-container">
             <div>
-                <strong>MilestoneProof</strong> — Open-Source AI Side Hustle Project for Hacktoberfest 2026 Week 2.
+                <strong>MilestoneProof</strong> — Open-Source SOW & Code Deliverable Verification Engine.
             </div>
             <div>
-                Built with Google Gemma 2 & Python AST. Zero cloud telemetry.
+                Configurable Open-Weight AI + Deterministic Python AST Scanner. Zero ungrounded claims.
             </div>
         </div>
     </footer>

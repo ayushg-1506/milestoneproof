@@ -1,7 +1,8 @@
 """
 Open-Weight AI Model Connector for MilestoneProof.
-Interfaces with local Google Gemma / Phi-3 via Ollama, with an autonomous
-deterministic rule-based fallback when offline.
+Supports configurable external OpenAI-compatible inference APIs (e.g. Hugging Face,
+Groq, OpenRouter) and local/remote Ollama runtimes, with transparent evaluator
+attribution and deterministic fallback.
 """
 
 import os
@@ -15,41 +16,65 @@ logger = logging.getLogger(__name__)
 
 
 class LLMEngine:
-    """Connects to local open-weight model runtimes (Ollama) with deterministic fallback."""
+    """Connects to open-weight model runtimes with transparent evaluator attribution."""
 
     def __init__(
         self,
+        api_base: Optional[str] = None,
+        api_key: Optional[str] = None,
         model_name: Optional[str] = None,
         ollama_host: Optional[str] = None,
-        timeout: int = 15
+        timeout: int = 30
     ):
-        self.ollama_host = ollama_host or os.getenv("OLLAMA_HOST", "http://localhost:11434")
-        self.model_name = model_name or os.getenv("MILESTONEPROOF_MODEL", "phi3:latest")
-        self.timeout = timeout
-        self.is_ollama_available = self._check_ollama()
+        # External inference API configuration (OpenAI-compatible)
+        self.api_base = (
+            api_base
+            or os.getenv("MODEL_API_BASE")
+            or os.getenv("OPENAI_API_BASE")
+        )
+        self.api_key = (
+            api_key
+            or os.getenv("MODEL_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+        )
+        self.model_name = (
+            model_name
+            or os.getenv("MODEL_NAME")
+            or os.getenv("MILESTONEPROOF_MODEL")
+            or "meta-llama/Llama-3.2-3B-Instruct"
+        )
+        self.timeout = int(os.getenv("MODEL_TIMEOUT", str(timeout)))
+        self.ollama_host = ollama_host or os.getenv("OLLAMA_HOST")
 
-    def _check_ollama(self) -> bool:
-        """Ping local Ollama daemon to check availability."""
-        try:
-            resp = requests.get(f"{self.ollama_host}/api/tags", timeout=2)
-            if resp.status_code == 200:
-                tags = resp.json().get("models", [])
-                model_names = [m.get("name") for m in tags]
-                logger.info(f"Ollama connected. Available models: {model_names}")
-                # If specified model is not in ollama, pick first available or gemma/phi
-                if model_names and not any(self.model_name in m for m in model_names):
-                    # Check if gemma or phi is available
-                    gemma_match = [m for m in model_names if "gemma" in m]
-                    phi_match = [m for m in model_names if "phi" in m]
-                    if gemma_match:
-                        self.model_name = gemma_match[0]
-                    elif phi_match:
-                        self.model_name = phi_match[0]
-                    else:
-                        self.model_name = model_names[0]
-                return True
-        except Exception:
-            pass
+        # Provider determination
+        self.provider = self._determine_provider()
+        self.is_model_available = self._check_availability()
+
+    def _determine_provider(self) -> str:
+        """Identify which provider runtime is configured."""
+        if self.api_base and self.api_key:
+            if "groq.com" in self.api_base:
+                return "Groq"
+            elif "openrouter.ai" in self.api_base:
+                return "OpenRouter"
+            elif "huggingface.co" in self.api_base:
+                return "HuggingFace"
+            return "OpenAI-Compatible"
+        elif self.ollama_host:
+            return "Ollama"
+        return "Deterministic"
+
+    def _check_availability(self) -> bool:
+        """Check if configured model inference endpoint is available."""
+        if self.provider in ["Groq", "OpenRouter", "HuggingFace", "OpenAI-Compatible"]:
+            # If API base and key are provided, external endpoint is configured
+            return bool(self.api_base and self.api_key)
+        elif self.provider == "Ollama" and self.ollama_host:
+            try:
+                resp = requests.get(f"{self.ollama_host}/api/tags", timeout=2)
+                return resp.status_code == 200
+            except Exception:
+                return False
         return False
 
     def evaluate_criterion(
@@ -58,8 +83,9 @@ class LLMEngine:
         citations: List[EvidenceCitation]
     ) -> Dict[str, Any]:
         """
-        Evaluate code evidence against a criterion using open-weight model or deterministic logic.
-        Returns dict with: status, confidence, reasoning, gap_description, remediation_steps.
+        Evaluate code evidence against a criterion.
+        Transparently tags whether output was produced by AI_MODEL, DETERMINISTIC_ENGINE,
+        or DETERMINISTIC_FALLBACK.
         """
         # If citations list is completely empty, it is definitively missing
         if not citations:
@@ -68,92 +94,197 @@ class LLMEngine:
                 "confidence": 0.98,
                 "reasoning": f"No corresponding code, symbols, or tests found in repository for '{criterion.title}'.",
                 "gap_description": f"Criterion '{criterion.id}' is entirely unimplemented.",
-                "remediation_steps": f"Implement {criterion.title} according to specifications: {criterion.description}."
+                "remediation_steps": f"Implement {criterion.title} according to specifications: {criterion.description}.",
+                "evaluator": "DETERMINISTIC_ENGINE",
+                "evaluator_details": "Deterministic AST Scanner (zero code citations detected)"
             }
 
-        # If Ollama is available, query the local open-weight model
-        if self.is_ollama_available:
+        # If external model or Ollama is configured, attempt inference
+        if self.is_model_available:
             try:
-                result = self._query_ollama(criterion, citations)
+                if self.provider in ["Groq", "OpenRouter", "HuggingFace", "OpenAI-Compatible"]:
+                    result = self._query_chat_completions(criterion, citations)
+                else:
+                    result = self._query_ollama(criterion, citations)
+
                 if result:
                     return result
             except Exception as e:
-                logger.warning(f"Ollama inference error, falling back to deterministic: {e}")
+                logger.warning(f"Model inference failed ({type(e).__name__}: {e}), engaging deterministic fallback")
+                fallback_reason = f"{type(e).__name__}: {str(e)[:80]}"
+                det_eval = self._deterministic_eval(criterion, citations)
+                det_eval["evaluator"] = "DETERMINISTIC_FALLBACK"
+                det_eval["evaluator_details"] = f"Model inference unavailable ({fallback_reason}); evaluated via deterministic AST rules."
+                return det_eval
 
-        # Deterministic semantic analysis fallback
-        return self._deterministic_eval(criterion, citations)
+        # Standard deterministic rule-based evaluation (Demo Mode or Offline)
+        det_eval = self._deterministic_eval(criterion, citations)
+        det_eval["evaluator"] = "DETERMINISTIC_ENGINE"
+        det_eval["evaluator_details"] = "Deterministic Rule Engine (AST & Semantic Analysis)"
+        return det_eval
+
+    def _query_chat_completions(
+        self,
+        criterion: AcceptanceCriterion,
+        citations: List[EvidenceCitation]
+    ) -> Optional[Dict[str, Any]]:
+        """Query an external OpenAI-compatible open-weight model endpoint."""
+        prompt_data = self._build_prompts(criterion, citations)
+        endpoint = f"{self.api_base.rstrip('/')}/chat/completions"
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        payload: Dict[str, Any] = {
+            "model": self.model_name,
+            "messages": [
+                {"role": "system", "content": prompt_data["system"]},
+                {"role": "user", "content": prompt_data["user"]}
+            ],
+            "temperature": 0.1,
+            "max_tokens": 300
+        }
+
+        if self.provider in ["Groq", "OpenAI-Compatible"]:
+            payload["response_format"] = {"type": "json_object"}
+
+        resp = requests.post(endpoint, json=payload, headers=headers, timeout=self.timeout)
+
+        if resp.status_code == 200:
+            data = resp.json()
+            content = data["choices"][0]["message"]["content"]
+            parsed = self._safe_parse_json(content)
+            if parsed:
+                return self._format_model_result(parsed, f"{self.model_name} via {self.provider}")
+        else:
+            raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:120]}")
+
+        return None
 
     def _query_ollama(
         self,
         criterion: AcceptanceCriterion,
         citations: List[EvidenceCitation]
     ) -> Optional[Dict[str, Any]]:
-        """Construct prompt and query local Gemma / Phi-3 model via Ollama."""
-        evidence_text = "\n\n".join([
-            f"--- Citation {i+1}: {c.file_path} (Lines {c.line_start}-{c.line_end}) ---\n{c.snippet}"
-            for i, c in enumerate(citations[:4])
-        ])
+        """Query local/remote Ollama instance."""
+        prompt_data = self._build_prompts(criterion, citations)
+        endpoint = f"{self.ollama_host.rstrip('/')}/api/generate"
+
+        payload = {
+            "model": self.model_name,
+            "prompt": f"{prompt_data['system']}\n\n{prompt_data['user']}",
+            "stream": False,
+            "format": "json",
+            "options": {
+                "temperature": 0.1,
+                "num_ctx": 1024,
+                "num_predict": 150
+            }
+        }
+
+        resp = requests.post(endpoint, json=payload, timeout=self.timeout)
+        if resp.status_code == 200:
+            raw = resp.json().get("response", "")
+            parsed = self._safe_parse_json(raw)
+            if parsed:
+                return self._format_model_result(parsed, f"{self.model_name} (Ollama)")
+        return None
+
+    def _build_prompts(
+        self,
+        criterion: AcceptanceCriterion,
+        citations: List[EvidenceCitation]
+    ) -> Dict[str, str]:
+        """Construct concise, grounded prompts for model evaluation."""
+        evidence_snippets = []
+        for i, c in enumerate(citations[:3]):
+            lines = c.snippet.strip().split("\n")
+            trimmed = "\n".join(lines[:20])
+            evidence_snippets.append(
+                f"--- Citation {i+1}: {c.file_path} (Lines {c.line_start}-{c.line_end}) ---\n{trimmed}"
+            )
+        evidence_text = "\n\n".join(evidence_snippets)
 
         system_prompt = (
             "You are MilestoneProof, an objective contract deliverable verification auditor. "
             "You verify whether submitted code artifacts genuinely satisfy contractual Acceptance Criteria. "
-            "Respond in valid JSON only, with keys: "
-            "'status' (one of: 'VERIFIED', 'PARTIAL', 'MISSING'), "
-            "'confidence' (float 0.0 to 1.0), "
-            "'reasoning' (1-2 concise factual sentences citing lines), "
-            "'gap_description' (specific missing edge cases, security validation, or tests, or null if fully verified), "
-            "'remediation_steps' (concise instructions to contractor to unlock full payout, or null if verified)."
+            "Respond ONLY in valid JSON with these exact keys:\n"
+            "\"status\": one of \"VERIFIED\", \"PARTIAL\", or \"MISSING\",\n"
+            "\"confidence\": float between 0.0 and 1.0,\n"
+            "\"reasoning\": a single factual string citing files and lines,\n"
+            "\"gap_description\": specific missing item string or null if fully satisfied,\n"
+            "\"remediation_steps\": actionable instruction string for the contractor or null if verified."
         )
 
-        user_prompt = f"""
-ACCEPTANCE CRITERION TO VERIFY:
+        user_prompt = f"""ACCEPTANCE CRITERION:
 ID: {criterion.id}
 Title: {criterion.title}
 Specification: {criterion.description}
 Priority: {criterion.priority}
 Verification Type: {criterion.verification_type}
 
-EMPIRICAL CODE EVIDENCE SUBMITTED BY SUBCONTRACTOR:
+EMPIRICAL CODE EVIDENCE SUBMITTED:
 {evidence_text}
 
-Analyze the evidence strictly. Check if all requirements in the specification are fulfilled or if security/edge-case gaps exist.
-Output JSON only.
-"""
+Analyze the evidence strictly against the specification.
+Output valid JSON only."""
 
-        payload = {
-            "model": self.model_name,
-            "prompt": f"{system_prompt}\n\n{user_prompt}",
-            "stream": False,
-            "format": "json",
-            "options": {
-                "temperature": 0.1,
-                "top_p": 0.9,
-                "num_ctx": 256,
-                "num_batch": 64
-            }
-        }
+        return {"system": system_prompt, "user": user_prompt}
 
-        resp = requests.post(
-            f"{self.ollama_host}/api/generate",
-            json=payload,
-            timeout=self.timeout
-        )
+    def _safe_parse_json(self, raw_text: str) -> Optional[Dict[str, Any]]:
+        """Extract and parse JSON from model output safely."""
+        text = raw_text.strip()
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0].strip()
+        elif "```" in text:
+            text = text.split("```")[1].split("```")[0].strip()
 
-        if resp.status_code == 200:
-            raw_response = resp.json().get("response", "")
-            parsed = json.loads(raw_response)
-            # Normalize status
-            status = parsed.get("status", "PARTIAL").upper()
-            if status not in ["VERIFIED", "PARTIAL", "MISSING"]:
-                status = "PARTIAL"
-            return {
-                "status": status,
-                "confidence": float(parsed.get("confidence", 0.9)),
-                "reasoning": parsed.get("reasoning", "Evaluated by local model."),
-                "gap_description": parsed.get("gap_description"),
-                "remediation_steps": parsed.get("remediation_steps")
-            }
+        try:
+            return json.loads(text)
+        except Exception:
+            start = text.find("{")
+            end = text.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                try:
+                    return json.loads(text[start:end+1])
+                except Exception:
+                    pass
         return None
+
+    def _format_model_result(self, parsed: Dict[str, Any], details: str) -> Dict[str, Any]:
+        """Normalize model output fields to match schema."""
+        status = str(parsed.get("status", "PARTIAL")).upper()
+        if status not in ["VERIFIED", "PARTIAL", "MISSING"]:
+            status = "PARTIAL"
+
+        reasoning = parsed.get("reasoning", "Evaluated by open-weight AI model.")
+        if isinstance(reasoning, list):
+            reasoning = " ".join(str(r) for r in reasoning)
+
+        gap = parsed.get("gap_description")
+        if isinstance(gap, list):
+            gap = " ".join(str(g) for g in gap)
+
+        remediation = parsed.get("remediation_steps")
+        if isinstance(remediation, list):
+            remediation = " ".join(str(r) for r in remediation)
+
+        try:
+            confidence = float(parsed.get("confidence", 0.9))
+        except (ValueError, TypeError):
+            confidence = 0.85
+
+        return {
+            "status": status,
+            "confidence": min(1.0, max(0.0, confidence)),
+            "reasoning": str(reasoning),
+            "gap_description": str(gap) if gap else None,
+            "remediation_steps": str(remediation) if remediation else None,
+            "evaluator": "AI_MODEL",
+            "evaluator_details": details
+        }
 
     def _deterministic_eval(
         self,
@@ -166,7 +297,6 @@ Output JSON only.
 
         # 1. Check for explicit gaps based on verification type
         if criterion.verification_type == "SECURITY_CHECK":
-            # Check for signature verification or HMAC
             has_hmac = "hmac" in combined_snippets or "signature" in combined_snippets or "verify" in combined_snippets
             has_constant_time = "compare_digest" in combined_snippets or "verify_signature" in combined_snippets
 
@@ -229,15 +359,13 @@ Output JSON only.
         matched_kws = [k for k in criterion.keywords if k.lower() in combined_snippets]
         kw_ratio = len(matched_kws) / max(1, len(criterion.keywords))
 
-        # Check for expected symbols
         symbol_matches = [
             c for c in citations
             if c.symbol_name and any(s.lower() in c.symbol_name.lower() for s in criterion.expected_symbols)
         ]
 
         if symbol_matches or kw_ratio >= 0.6:
-            # Check for stub or TODO markers
-            if "todo" in combined_snippets or "pass" in combined_snippets and len(combined_snippets) < 100:
+            if "todo" in combined_snippets or ("pass" in combined_snippets and len(combined_snippets) < 100):
                 return {
                     "status": "PARTIAL",
                     "confidence": 0.90,

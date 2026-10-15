@@ -55,6 +55,14 @@ class CriterionVerification(BaseModel):
     reasoning: str = Field(..., description="Clear explanation of the verdict")
     gap_description: Optional[str] = Field(default=None, description="Exact missing implementation detail if any")
     remediation_steps: Optional[str] = Field(default=None, description="Actionable checklist item for contractor")
+    evaluator: str = Field(
+        default="DETERMINISTIC_ENGINE",
+        description="AI_MODEL, DETERMINISTIC_ENGINE, or DETERMINISTIC_FALLBACK"
+    )
+    evaluator_details: Optional[str] = Field(
+        default=None,
+        description="Model name, provider, or fallback explanation"
+    )
 
 
 class FinancialSettlement(BaseModel):
@@ -85,3 +93,15 @@ class AuditReport(BaseModel):
     results: List[CriterionVerification]
     settlement: FinancialSettlement
     contractor_letter: str
+    audit_mode: str = Field(
+        default="DETERMINISTIC_ENGINE",
+        description="AI_MODEL, HYBRID, or DETERMINISTIC_ENGINE"
+    )
+    model_name: Optional[str] = Field(
+        default=None,
+        description="Name of the open-weight model if AI evaluated"
+    )
+    disclaimer: str = Field(
+        default="Advisory verification findings only. All contractual compliance determinations and financial disbursement decisions remain at the sole discretion of the human reviewer.",
+        description="Legal and contractual disclaimer"
+    )

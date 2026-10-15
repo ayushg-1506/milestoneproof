@@ -3,12 +3,18 @@ services:
     name: milestoneproof
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python -m milestoneproof.app
+    startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT milestoneproof.app:app
     plan: free
     envVars:
       - key: PORT
         value: 10000
       - key: FLASK_ENV
         value: production
-      - key: OLLAMA_HOST
-        value: "http://localhost:11434"
+      - key: MODEL_API_BASE
+        sync: false
+      - key: MODEL_API_KEY
+        sync: false
+      - key: MODEL_NAME
+        value: "meta-llama/Llama-3.2-3B-Instruct"
+      - key: MODEL_TIMEOUT
+        value: "30"

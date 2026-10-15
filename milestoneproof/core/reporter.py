@@ -49,18 +49,25 @@ class ReportGenerator:
     @classmethod
     def generate_markdown_report(cls, report: AuditReport) -> str:
         """Generate comprehensive Markdown deliverable audit report."""
+        audit_mode_str = f"{report.audit_mode}"
+        if report.model_name:
+            audit_mode_str += f" ({report.model_name})"
+
         lines = [
             f"# Milestone Deliverable Audit Report: {report.sow_title}",
             "",
             f"- **Project**: {report.project_name}",
             f"- **Subcontractor / Contractor**: {report.contractor_name}",
             f"- **Audit Timestamp**: {report.scan_timestamp}",
+            f"- **Audit Mode**: {audit_mode_str}",
             f"- **Compliance Score**: {report.compliance_score:.1f}%",
             f"- **Verification Breakdown**: {report.verified_count} Verified | {report.partial_count} Partial | {report.missing_count} Missing",
             "",
+            "> ⚠️ **Important Legal & Reviewer Disclaimer**: MilestoneProof provides automated, evidence-linked verification findings and proportional scope references for technical reviewers. All contractual compliance determinations, milestone acceptance decisions, and financial disbursements remain at the sole discretion and authority of the human project reviewer.",
+            "",
             "## 1. Scope Completion & Valuation Reference",
             "",
-            "> *Disclaimer: Figures below are mathematical references proportional to agreed criteria weights. All formal acceptance and payment decisions remain under the sole discretion and authority of the human reviewer.*",
+            "> *Note: Figures below are mathematical references proportional to agreed criteria weights.*",
             "",
             f"| Metric | Amount ({report.settlement.currency}) | Details |",
             "| :--- | :---: | :--- |",
@@ -90,9 +97,14 @@ class ReportGenerator:
 
         for res in report.results:
             badge = "✅ VERIFIED" if res.status == "VERIFIED" else ("⚠️ PARTIAL" if res.status == "PARTIAL" else "❌ MISSING")
+            evaluator_info = res.evaluator
+            if res.evaluator_details:
+                evaluator_info += f" ({res.evaluator_details})"
+
             lines.extend([
                 f"### {res.criterion_id}: {res.title} [{badge}]",
                 f"- **Priority**: {res.priority} | **Confidence**: {res.confidence * 100:.0f}%",
+                f"- **Evaluator**: `{evaluator_info}`",
                 f"- **Audit Finding**: {res.reasoning}"
             ])
 

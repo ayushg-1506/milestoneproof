@@ -1,12 +1,27 @@
 // MilestoneProof Interactive Dashboard Application
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Elements
+    // Header & Status Elements
     const modelStatusEl = document.getElementById("modelStatus");
     const modelStatusTextEl = document.getElementById("modelStatusText");
+    const brandTechBadge = document.getElementById("brandTechBadge");
     const loadSampleBtn = document.getElementById("loadSampleBtn");
+
+    // SOW Inputs
     const sowInput = document.getElementById("sowInput");
-    const deliverablePathInput = document.getElementById("deliverablePathInput");
+    const uploadSowBtn = document.getElementById("uploadSowBtn");
+    const sowFileInput = document.getElementById("sowFileInput");
+
+    // Deliverable Upload Inputs
+    const dropZone = document.getElementById("dropZone");
+    const zipFileInput = document.getElementById("zipFileInput");
+    const selectedFileContainer = document.getElementById("selectedFileContainer");
+    const selectedFileName = document.getElementById("selectedFileName");
+    const selectedFileSize = document.getElementById("selectedFileSize");
+    const removeFileBtn = document.getElementById("removeFileBtn");
+    const useDemoDeliverable = document.getElementById("useDemoDeliverable");
+
+    // Audit Trigger & Loading
     const runAuditBtn = document.getElementById("runAuditBtn");
     const auditLoading = document.getElementById("auditLoading");
     const resultsSection = document.getElementById("resultsSection");
@@ -17,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const metricVerifiedPercent = document.getElementById("metricVerifiedPercent");
     const metricRetainedAmount = document.getElementById("metricRetainedAmount");
     const metricProjectName = document.getElementById("metricProjectName");
+    const metricAuditMode = document.getElementById("metricAuditMode");
     const pillVerified = document.getElementById("pillVerified");
     const pillPartial = document.getElementById("pillPartial");
     const pillMissing = document.getElementById("pillMissing");
@@ -33,19 +49,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const tabBtns = document.querySelectorAll(".tab-btn");
     const tabPanes = document.querySelectorAll(".tab-pane");
 
-    // 1. Check System Health & Model Status
+    let currentSelectedFile = null;
+
+    // 1. Check System Health & Model Configuration
     async function checkHealth() {
         try {
             const res = await fetch("/api/health");
             const data = await res.json();
-            if (data.ollama_connected) {
-                modelStatusTextEl.textContent = `Ollama: ${data.active_model} (Active)`;
+            if (data.model_configured && data.active_model) {
+                modelStatusTextEl.textContent = `AI: ${data.active_model} (${data.provider})`;
                 modelStatusEl.classList.add("status-connected");
+                brandTechBadge.textContent = `${data.provider} AI`;
             } else {
-                modelStatusTextEl.textContent = "Deterministic Semantic Fallback (Active)";
+                modelStatusTextEl.textContent = "Deterministic Demo Mode (No API Key)";
+                modelStatusEl.classList.remove("status-connected");
+                brandTechBadge.textContent = "Deterministic AST";
             }
         } catch (e) {
-            modelStatusTextEl.textContent = "Offline Fallback Engine Ready";
+            modelStatusTextEl.textContent = "Deterministic Offline Engine Ready";
+            modelStatusEl.classList.remove("status-connected");
         }
     }
 
@@ -55,13 +77,90 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch("/api/sample");
             const data = await res.json();
             sowInput.value = data.sow_content || "";
-            deliverablePathInput.value = data.deliverable_path || "";
+            useDemoDeliverable.checked = true;
+            clearSelectedZip();
         } catch (e) {
             console.error("Failed to load sample:", e);
         }
     }
 
-    // 3. Tab Switching Logic
+    // SOW File Upload Handler
+    uploadSowBtn.addEventListener("click", () => {
+        sowFileInput.click();
+    });
+
+    sowFileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            sowInput.value = event.target.result;
+        };
+        reader.readAsText(file);
+    });
+
+    // 3. ZIP File Drag & Drop Handlers
+    dropZone.addEventListener("click", () => {
+        zipFileInput.click();
+    });
+
+    dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleZipFileSelection(e.dataTransfer.files[0]);
+        }
+    });
+
+    zipFileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleZipFileSelection(e.target.files[0]);
+        }
+    });
+
+    function handleZipFileSelection(file) {
+        if (!file.name.toLowerCase().endsWith(".zip")) {
+            alert("Please select a valid .zip archive of the deliverable codebase.");
+            return;
+        }
+
+        currentSelectedFile = file;
+        selectedFileName.textContent = file.name;
+        const sizeKb = (file.size / 1024).toFixed(1);
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+        selectedFileSize.textContent = file.size > 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+
+        selectedFileContainer.classList.remove("hidden");
+        useDemoDeliverable.checked = false;
+    }
+
+    function clearSelectedZip() {
+        currentSelectedFile = null;
+        zipFileInput.value = "";
+        selectedFileContainer.classList.add("hidden");
+    }
+
+    removeFileBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        clearSelectedZip();
+    });
+
+    useDemoDeliverable.addEventListener("change", () => {
+        if (useDemoDeliverable.checked) {
+            clearSelectedZip();
+        }
+    });
+
+    // 4. Tab Switching Logic
     tabBtns.forEach(btn => {
         btn.addEventListener("click", () => {
             tabBtns.forEach(b => b.classList.remove("active"));
@@ -69,35 +168,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
             btn.classList.add("active");
             const target = btn.getAttribute("data-tab");
-            document.getElementById(target).classList.add("active");
+            const targetPane = document.getElementById(target);
+            if (targetPane) targetPane.classList.add("active");
         });
     });
 
-    // 4. Run Deliverable Audit
+    // 5. Run Deliverable Audit
     async function executeAudit() {
         const sowText = sowInput.value.trim();
-        const deliverablePath = deliverablePathInput.value.trim();
 
         if (!sowText) {
-            alert("Please paste an SOW specification or click 'Load Demo SOW'.");
+            alert("Please paste Statement of Work markdown or click 'Load Demo SOW'.");
             return;
         }
-        if (!deliverablePath) {
-            alert("Please enter the local deliverable codebase path.");
+
+        if (!currentSelectedFile && !useDemoDeliverable.checked) {
+            alert("Please upload a .zip archive of the codebase or select 'Use bundled demo deliverable'.");
             return;
         }
 
         auditLoading.classList.remove("hidden");
         resultsSection.classList.add("hidden");
 
+        const formData = new FormData();
+        formData.append("sow_text", sowText);
+
+        if (currentSelectedFile) {
+            formData.append("deliverable_zip", currentSelectedFile);
+        } else if (useDemoDeliverable.checked) {
+            formData.append("use_sample_deliverable", "true");
+        }
+
         try {
             const response = await fetch("/api/audit", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    sow_text: sowText,
-                    deliverable_path: deliverablePath
-                })
+                body: formData
             });
 
             const result = await response.json();
@@ -118,15 +223,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // 5. Render Audit Findings
+    // 6. Render Audit Findings
     function renderResults(report) {
         const s = report.settlement;
 
         metricMilestoneAmount.textContent = `$${s.milestone_amount.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         metricReleaseAmount.textContent = `$${s.recommended_release_amount.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        metricVerifiedPercent.textContent = `${s.verified_percentage.toFixed(1)}% Verified`;
+        metricVerifiedPercent.textContent = `${s.verified_percentage.toFixed(1)}% Verified (Reference)`;
         metricRetainedAmount.textContent = `$${s.retained_escrow_amount.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         metricProjectName.textContent = report.project_name || "Milestone Deliverable";
+
+        const auditModeLabel = report.model_name
+            ? `Mode: ${report.audit_mode} (${report.model_name})`
+            : `Mode: ${report.audit_mode}`;
+        metricAuditMode.textContent = auditModeLabel;
 
         pillVerified.textContent = `${report.verified_count} Verified`;
         pillPartial.textContent = `${report.partial_count} Partial`;
@@ -137,6 +247,16 @@ document.addEventListener("DOMContentLoaded", () => {
         report.results.forEach((item, index) => {
             const statusClass = item.status === "VERIFIED" ? "status-verified" : (item.status === "PARTIAL" ? "status-partial" : "status-missing");
             const statusBadgeClass = item.status === "VERIFIED" ? "pill-success" : (item.status === "PARTIAL" ? "pill-warning" : "pill-danger");
+
+            let evaluatorTagClass = "evaluator-det";
+            let evaluatorLabel = "Deterministic Engine";
+            if (item.evaluator === "AI_MODEL") {
+                evaluatorTagClass = "evaluator-ai";
+                evaluatorLabel = `AI Model: ${item.evaluator_details || "Active Model"}`;
+            } else if (item.evaluator === "DETERMINISTIC_FALLBACK") {
+                evaluatorTagClass = "evaluator-fallback";
+                evaluatorLabel = `Fallback to Deterministic (${item.evaluator_details || ""})`;
+            }
 
             const card = document.createElement("div");
             card.className = `criteria-item ${statusClass}`;
@@ -155,7 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
             } else {
-                citationsHtml = `<div class="citation-card"><span class="text-danger">❌ No matching symbols, routes, or tests found in deliverable repository.</span></div>`;
+                citationsHtml = `<div class="citation-card"><span class="text-danger">❌ No matching symbols, routes, or tests detected in deliverable archive.</span></div>`;
             }
 
             let gapsHtml = "";
@@ -180,6 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <span class="criteria-id">${item.criterion_id}</span>
                         <strong>${escapeHtml(item.title)}</strong>
                         <span class="pill ${item.priority === 'MUST' ? 'pill-danger' : 'pill-warning'}" style="font-size:0.68rem;">${item.priority}</span>
+                        <span class="evaluator-tag ${evaluatorTagClass}">${escapeHtml(evaluatorLabel)}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.75rem;">
                         <span class="pill ${statusBadgeClass}">${item.status} (${Math.round(item.confidence * 100)}%)</span>
@@ -250,9 +371,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Helper: Escape HTML
-    function escapeHtml(str) {
-        if (!str) return "";
-        return str
+    function escapeHtml(text) {
+        if (!text) return "";
+        return text
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
@@ -260,26 +381,25 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/'/g, "&#039;");
     }
 
-    // 6. Copy Actions
+    // Copy Buttons
     copyLetterBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText(letterText.textContent);
-        const orig = copyLetterBtn.textContent;
-        copyLetterBtn.textContent = "✓ Copied!";
-        setTimeout(() => copyLetterBtn.textContent = orig, 2000);
+        navigator.clipboard.writeText(letterText.textContent).then(() => {
+            copyLetterBtn.textContent = "✓ Copied!";
+            setTimeout(() => { copyLetterBtn.textContent = "📋 Copy Letter"; }, 2000);
+        });
     });
 
     copyMarkdownBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText(markdownExportText.textContent);
-        const orig = copyMarkdownBtn.textContent;
-        copyMarkdownBtn.textContent = "✓ Copied!";
-        setTimeout(() => copyMarkdownBtn.textContent = orig, 2000);
+        navigator.clipboard.writeText(markdownExportText.textContent).then(() => {
+            copyMarkdownBtn.textContent = "✓ Copied!";
+            setTimeout(() => { copyMarkdownBtn.textContent = "📋 Copy Markdown"; }, 2000);
+        });
     });
 
-    // Event Listeners
-    loadSampleBtn.addEventListener("click", loadSample);
+    // Run Audit Button
     runAuditBtn.addEventListener("click", executeAudit);
+    loadSampleBtn.addEventListener("click", loadSample);
 
-    // Initial load
+    // Initial Health Check
     checkHealth();
-    loadSample();
 });
