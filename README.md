@@ -26,14 +26,14 @@ When a contractor marks a milestone ready for review, you face an immediate veri
 
 ```mermaid
 graph TD
-    A[Contract SOW / Markdown Spec] --> B[SOW Parser & Criteria Decomposer]
-    C[Uploaded ZIP Codebase / PR Extract] --> D[Secure Tempdir Extraction & AST Scanner]
-    B --> E[Verification Engine<br/>External Open-Weight Model or Deterministic Rules]
+    A["Contract SOW / Markdown Spec"] --> B["SOW Parser & Criteria Decomposer"]
+    C["Uploaded ZIP Codebase / PR Extract"] --> D["Secure Tempdir Extraction & AST Scanner"]
+    B --> E["Verification Engine<br/>External Open-Weight Model or Deterministic Rules"]
     D --> E
-    E --> F[Milestone Verification Matrix<br/>VERIFIED | PARTIAL | MISSING]
-    F --> G[Proportional Scope Valuation Reference<br/>Informational Completed vs. Unverified Scope]
-    F --> H[Collaborative Contractor Review Letter]
-    F --> I[Exportable Markdown & HTML Audit Dossier]
+    E --> F["Milestone Verification Matrix<br/>VERIFIED / PARTIAL / MISSING"]
+    F --> G["Proportional Scope Valuation Reference<br/>Informational Completed vs. Unverified Scope"]
+    F --> H["Collaborative Contractor Review Letter"]
+    F --> I["Exportable Markdown & HTML Audit Dossier"]
 ```
 
 ### Key Capabilities
