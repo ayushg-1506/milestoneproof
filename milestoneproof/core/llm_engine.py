@@ -37,18 +37,31 @@ class LLMEngine:
             or os.getenv("MODEL_API_KEY")
             or os.getenv("OPENAI_API_KEY")
         )
-        self.model_name = (
-            model_name
-            or os.getenv("MODEL_NAME")
-            or os.getenv("MILESTONEPROOF_MODEL")
-            or "meta-llama/Llama-3.2-3B-Instruct"
-        )
         self.timeout = int(os.getenv("MODEL_TIMEOUT", str(timeout)))
         self.ollama_host = ollama_host or os.getenv("OLLAMA_HOST")
 
         # Provider determination
         self.provider = self._determine_provider()
         self.is_model_available = self._check_availability()
+
+        # Model identifier resolution (no hardcoded model when unconfigured)
+        configured_model = (
+            model_name
+            or os.getenv("MODEL_NAME")
+            or os.getenv("MILESTONEPROOF_MODEL")
+        )
+        if configured_model:
+            self.model_name = configured_model
+        elif self.provider == "Groq":
+            self.model_name = "llama-3.1-8b-instant"
+        elif self.provider == "HuggingFace":
+            self.model_name = "meta-llama/Llama-3.2-3B-Instruct"
+        elif self.provider == "OpenRouter":
+            self.model_name = "meta-llama/llama-3.2-3b-instruct:free"
+        elif self.provider == "Ollama":
+            self.model_name = "phi3:latest"
+        else:
+            self.model_name = None
 
     def _determine_provider(self) -> str:
         """Identify which provider runtime is configured."""

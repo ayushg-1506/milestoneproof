@@ -16,6 +16,6 @@ services:
       - key: MODEL_API_KEY
         sync: false
       - key: MODEL_NAME
-        value: "meta-llama/Llama-3.2-3B-Instruct"
+        sync: false
       - key: MODEL_TIMEOUT
         value: "30"
