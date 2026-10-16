@@ -127,7 +127,8 @@ MilestoneProof is ready for 1-click deployment on [Render](https://render.com).
 
 Alternatively, use the included `render.yaml` blueprint:
 1. In Render, select **Blueprints** -> **New Blueprint Instance**.
-2. Connect your repo; Render will automatically detect `render.yaml` and configure the service.
+2. Connect your repo; Render will automatically detect `render.yaml` and configure the free web service with zero credential prompts.
+3. The application deploys and runs immediately in Deterministic Demo Mode. You can optionally add `MODEL_API_KEY`, `MODEL_API_BASE`, and `MODEL_NAME` under the service's Environment settings at any time to enable external AI inference.
 
 ---
 

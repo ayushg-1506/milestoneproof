@@ -11,11 +11,3 @@ services:
         value: 10000
       - key: FLASK_ENV
         value: production
-      - key: MODEL_API_BASE
-        sync: false
-      - key: MODEL_API_KEY
-        sync: false
-      - key: MODEL_NAME
-        sync: false
-      - key: MODEL_TIMEOUT
-        value: "30"
