@@ -47,6 +47,14 @@ graph TD
 
 ---
 
+## Screenshot
+
+![MilestoneProof dashboard showing the SOW input and deliverable upload workflow](docs/screenshots/milestoneproof-dashboard.png)
+
+*The MilestoneProof deliverable audit workspace: Enter or upload a Statement of Work on the left, select or drag-and-drop a deliverable codebase archive on the right, and generate line-accurate evidence citations.*
+
+---
+
 ## Quickstart: Local Setup
 
 ### 1. Prerequisites
