@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const downloadMarkdownBtn = document.getElementById("downloadMarkdownBtn");
 
     // Tab Navigation
-    const tabBtns = document.querySelectorAll(".tab-btn");
+    const tabBtns = document.querySelectorAll(".tab-btn, .tab-pill");
     const tabPanes = document.querySelectorAll(".tab-pane");
 
     let currentSelectedFile = null;

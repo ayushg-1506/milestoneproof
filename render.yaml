@@ -1,10 +1,11 @@
 services:
   - type: web
     name: milestoneproof
-    env: python
+    runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT milestoneproof.app:app
     plan: free
+    healthCheckPath: /api/health
     envVars:
       - key: PORT
         value: 10000
